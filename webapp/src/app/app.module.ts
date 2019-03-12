@@ -8,6 +8,8 @@ import { AppComponent } from './app.component';
 
 import { AgmCoreModule } from '@agm/core';
 
+import { credentials } from 'src/assets/credentials';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -17,7 +19,7 @@ import { AgmCoreModule } from '@agm/core';
     BrowserAnimationsModule,
     MaterialComponentsModule,
     AgmCoreModule.forRoot({
-      apiKey: 'AIzaSyAFuVrw8GpKv5pLkQBQ39dQRsRBMCohMmk',
+      apiKey: credentials.mapsKey,
       libraries: ['places'],
     }),
     HttpClientModule,

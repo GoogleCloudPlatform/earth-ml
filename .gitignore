@@ -54,4 +54,4 @@ env/
 node_modules/
 
 # Credentials
-credentials.json
+credentials.*
