@@ -1,0 +1,94 @@
+<!-- Possible icons
+<mat-icon matListIcon> landscape </mat-icon>
+<mat-icon matListIcon> nature </mat-icon>
+<mat-icon matListIcon> nature_people </mat-icon>
+<mat-icon matListIcon> wb_cloudy </mat-icon>
+<mat-icon matListIcon> wb_sunny </mat-icon>
+<mat-icon matListIcon> ac_unit </mat-icon>
+<mat-icon matListIcon> domain </mat-icon>
+<mat-icon matListIcon> location_city </mat-icon>
+<mat-icon matListIcon> public </mat-icon>
+<mat-icon matListIcon> whatshot </mat-icon>
+<mat-icon matListIcon> star </mat-icon>
+-->
+
+<mat-toolbar>
+  <button mat-icon-button (click)="sidenav.toggle()">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span>{{title}}</span>
+</mat-toolbar>
+
+<div id="main-content" class="stretch">
+  <mat-sidenav-container autosize>
+
+    <!-- Sidenav -->
+    <mat-sidenav #sidenav mode="side" opened>
+
+      <!-- Search Box -->
+      <mat-form-field id="search-box" appearance="outline">
+        <mat-label>Search Location</mat-label>
+        <input #searchBox matInput
+            autocorrect="off" autocapitalize="off" spellcheck="off">
+        <mat-hint>Explore a place or location</mat-hint>
+      </mat-form-field>
+
+      <!-- Locations List -->
+      <mat-action-list>
+        <button mat-list-item *ngFor="let location of locations"
+            (click)="setLocation(location)">
+          <mat-icon matListIcon> {{location.icon}} </mat-icon>
+          <h1 mat-line> {{location.name}} </h1>
+        </button>
+      </mat-action-list>
+
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+
+      <!-- Year -->
+      <div id="year-div">{{year}}</div>
+
+      <!-- Controls -->
+      <div id="controls-div">
+        <mat-card>
+
+          <mat-card-title>
+            <mat-icon>layers</mat-icon> Landcover change
+          </mat-card-title>
+
+          <mat-card-content>
+            <mat-slider id="opacity-slider"
+                [(value)]="landcoverOpacity" min="0" max="1" step="0.01">
+            </mat-slider>
+          </mat-card-content>
+
+          <mat-card-content>
+            <mat-slide-toggle (change)="toggleAnimation($event.checked)" checked>
+              Animation
+            </mat-slide-toggle>
+          </mat-card-content>
+
+        </mat-card>
+      </div>
+
+      <!-- Map -->
+      <div id="map-div" class="stretch">
+        <agm-map
+            [latitude]="state.lat" [longitude]="state.lng" [zoom]="state.zoom"
+            (mapReady)="onMapReady($event)" minZoom="2" maxZoom="13"
+            streetViewControl="" mapTypeControl="" mapTypeId="satellite"
+            styles="[{}]  // Set Google logo to white">
+        </agm-map>
+      </div>
+
+      <!-- Year Slider -->
+      <div id="slider-div">
+        <mat-slider [(value)]="year" [min]="startYear" [max]="endYear"
+            (change)="updateOverlays()" thumbLabel>
+        </mat-slider>
+      </div>
+
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

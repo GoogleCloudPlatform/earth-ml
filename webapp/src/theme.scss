@@ -1,0 +1,15 @@
+// @import "~@angular/material/prebuilt-themes/indigo-pink.css";
+// @import "~@angular/material/prebuilt-themes/deeppurple-amber.css";
+// @import "~@angular/material/prebuilt-themes/pink-bluegrey.css";
+// @import "~@angular/material/prebuilt-themes/purple-green.css";
+
+@import '~@angular/material/theming';
+@include mat-core();
+
+// Available color palettes: https://material.io/design/color/
+$primary: mat-palette($mat-green, 400);
+$accent:  mat-palette($mat-green, 600);
+$warn:    mat-palette($mat-deep-orange);
+$theme: mat-dark-theme($primary, $accent, $warn);
+
+@include angular-material-theme($theme);

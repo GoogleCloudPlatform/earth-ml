@@ -1,0 +1,57 @@
+.stretch {
+  position: absolute;
+  height: auto;
+  width: auto;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+#main-content {
+  top: 7.6ex;
+}
+
+mat-sidenav-container {
+  position: relative;
+  height: 100%;
+}
+
+mat-slider {
+  width: 100%;
+}
+
+#search-box {
+ margin: 1ex;
+}
+
+#year-div {
+  position: absolute;
+  z-index: 1;
+  left: 0.4ex;
+  font-size: 8ex;
+  text-shadow: 0 2px 0.8ex black;
+}
+
+#controls-div {
+  z-index: 1;
+  position: absolute;
+  top: 1ex;
+  right: 1ex;
+  background-color: black;
+}
+
+#map-div {
+  bottom: 8ex;
+}
+
+agm-map {
+  height: 100%;
+}
+
+#slider-div {
+  position: absolute;
+  left: 2ex;
+  right: 2ex;
+  bottom: 0;
+}
