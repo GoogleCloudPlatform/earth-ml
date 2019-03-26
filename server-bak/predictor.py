@@ -1,11 +1,16 @@
+import json
+import logging
 import tensorflow as tf
 from tensorflow import keras
 
+import cache
 import config
-import ee_landsat8
+import ee_landsat
+
+tf.enable_eager_execution()
 
 
-def make_dataset(filenames):
+def make_dataset(filenames, batch_size=64):
   # The features_dict is like a schema for the TensorFlow Example protos.
   image_size = config.tile_size + 2*config.cnn_padding
   features_dict = {
@@ -32,7 +37,7 @@ def make_dataset(filenames):
   dataset = dataset.map(get_feature_vectors)
 
   # Batch the elements.
-  dataset = dataset.batch(config.dataset_batch_size)
+  dataset = dataset.batch(batch_size)
   dataset = dataset.prefetch(1)
   return dataset
 
@@ -41,14 +46,30 @@ keras_model = None
 
 
 def predict(block_id, inputs_file, mixer_file, predictions_file):
+  result = {
+      'id': block_id,
+      'predictions_file': predictions_file,
+      'mixer_file': mixer_file,
+  }
+  if cache.gcs_file_exists(predictions_file):
+    logging.info('{}: predictions found {}'.format(block_id, predictions_file))
+    return result
+
   global keras_model
   if keras_model is None:
-    keras_model = keras.models.load_model('model.h5')
+    keras_model = keras.models.load_model(config.model_file)
 
+  with tf.gfile.Open(mixer_file) as f:
+    mixer = json.load(f)
+    cols = int(mixer['patchesPerRow'])
+    rows = int(mixer['totalPatches'] / cols)
+
+  logging.info('{}: predictions running ({}x{})'.format(block_id, cols, rows))
   padding = config.cnn_padding
   with tf.io.TFRecordWriter(predictions_file) as f:
-    dataset = make_dataset(inputs_file)
-    for padded_patch in keras_model.predict(dataset, steps=1):
+    dataset = make_dataset(inputs_file, batch_size=cols)
+    for i, padded_patch in enumerate(keras_model.predict(dataset, steps=rows)):
+      logging.info('{}: prediction patch {} of {}'.format(block_id, i+1, rows))
       patch = padded_patch[padding:-padding, padding:-padding, :]
       patch_indices = tf.reshape(
           tf.argmax(patch, axis=2),
@@ -61,9 +82,4 @@ def predict(block_id, inputs_file, mixer_file, predictions_file):
           ),
       }))
       f.write(example.SerializeToString())
-
-  return {
-      'id': block_id,
-      'predictions_file': predictions_file,
-      'mixer_file': mixer_file,
-  }
+  return result

@@ -1,0 +1,9 @@
+runtime: python37
+
+instance_class: F4
+service: classifier
+
+env_variables:
+  GOOGLE_APPLICATION_CREDENTIALS: "credentials.json"
+
+entrypoint: gunicorn -b :$PORT classifier:app

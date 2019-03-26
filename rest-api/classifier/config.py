@@ -1,7 +1,20 @@
+import ee
+import json
+import os
+
+# Initialize Earth Engine.
+credentials_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+with open(credentials_file) as f:
+  credentials = json.load(f)
+  credentials_email = credentials['client_email']
+ee.Initialize(ee.ServiceAccountCredentials(credentials_email, credentials_file))
+
 # Google Cloud settings.
 project = 'project-earth-2018'
-bucket = 'project-earth-2018'
-pipeline_topic = 'blocks'
+regions_bucket = 'project-earth-regions'
+regions_topic = 'regions'
+
+classifications_bucket = 'project-earth-classifications'
 
 # Earth Engine settings.
 ee_project = 'projects/project-earth'
@@ -23,6 +36,7 @@ thermal_min = 273.15 * 10  # water freezing point in Kelvin.
 thermal_max = 373.15 * 10  # water boiling point in Kelvin.
 
 features = optical_bands + thermal_bands
+label = 'label'
 
 classifications = [
   {'name': 'Farmland', 'color': 'F0E68C'},
@@ -39,7 +53,7 @@ classifications = [
 palette = [classification['color'] for classification in classifications]
 
 # Constants.
-block_zoom = 10
+region_zoom = 11  # 4
 tile_size = 256
 cnn_padding = 16
 cnn_patch_size = 2*cnn_padding + 1
@@ -47,3 +61,9 @@ cnn_patch_size = 2*cnn_padding + 1
 # Dataset settings.
 dataset_batch_size = 64
 dataset_num_parallel_calls = 8
+
+train_files = 8
+test_files = 2
+train_and_test_files = train_files + test_files
+
+model_file = 'model.h5'

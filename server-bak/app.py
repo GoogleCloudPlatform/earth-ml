@@ -3,8 +3,9 @@ import json
 import logging
 
 import ee_asset
-import ee_landsat8
-import model
+import ee_landsat
+import landcover
+import predictor
 
 import tensorflow as tf
 tf.enable_eager_execution()
@@ -25,18 +26,18 @@ def index():
 
 @app.route('/landcover/<int:x>/<int:y>/<int:zoom>/<int:year>')
 def landcover_tile_url(x, y, zoom, year):
-  return flask.redirect(ee_asset.tile_url(x, y, zoom, year))
+  return flask.redirect(landcover.tile_url(x, y, zoom, year))
 
 
-@app.route('/landsat8/<int:x>/<int:y>/<int:zoom>/<int:year>')
-def landsat8_tile_url(x, y, zoom, year):
-  return flask.redirect(ee_landsat8.tile_url(x, y, zoom, year))
+@app.route('/landsat/<int:x>/<int:y>/<int:zoom>/<int:year>')
+def landsat_tile_url(x, y, zoom, year):
+  return flask.redirect(ee_landsat.tile_url(x, y, zoom, year))
 
 
-@app.route('/landsat8/request')
-def landsat8_request():
+@app.route('/landsat/request')
+def landsat_request():
   args = flask.request.args
-  return json.dumps(ee_landsat8.request(
+  return json.dumps(ee_landsat.request(
       block_id=args['id'],
       x=int(args['x']),
       y=int(args['y']),
@@ -49,20 +50,10 @@ def landsat8_request():
   ))
 
 
-@app.route('/landsat8/wait')
-def landsat8_wait():
-  args = flask.request.args
-  return json.dumps(ee_landsat8.wait(
-      block_id=args['id'],
-      task_id=args['task_id'],
-      file_prefix=args['file_prefix'],
-  ))
-
-
 @app.route('/model/predict')
 def model_predict():
   args = flask.request.args
-  return json.dumps(model.predict(
+  return json.dumps(predictor.predict(
       block_id=args['id'],
       inputs_file=args['inputs_file'],
       mixer_file=args['mixer_file'],

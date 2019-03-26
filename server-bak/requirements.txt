@@ -3,5 +3,5 @@ earthengine-api
 google-cloud-firestore
 google-cloud-pubsub
 oauth2client
-supermercado
+mercantile
 tensorflow

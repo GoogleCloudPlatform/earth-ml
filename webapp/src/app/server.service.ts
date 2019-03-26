@@ -1,19 +1,21 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
+import { environment } from '../environments/environment';
+
 @Injectable({
   providedIn: 'root'
 })
 export class ServerService {
-  baseURL = 'http://127.0.0.1:4213'
+  baseURL = environment.restURL
 
   constructor(private http: HttpClient) { }
 
   landsatTileURL(x: number, y: number, zoom: number, year: number) {
-    return `${this.baseURL}/landsat8/${x}/${y}/${zoom}/${year}`
+    return `${this.baseURL}/landsat/tile/${x}/${y}/${zoom}/${year}`
   }
 
   landcoverTileURL(x: number, y: number, zoom: number, year: number) {
-    return `${this.baseURL}/landcover/${x}/${y}/${zoom}/${year}`
+    return `${this.baseURL}/landcover/tile/${x}/${y}/${zoom}/${year}`
   }
 }

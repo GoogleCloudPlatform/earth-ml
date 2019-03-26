@@ -1,5 +1,12 @@
 import threading
 from google.cloud import firestore
+from google.cloud import storage
+
+
+def gcs_file_exists(gcs_path):
+  storage_client = storage.Client()
+  bucket, path = gcs_path.lstrip('gs://').split('/', 1)
+  return storage_client.bucket(bucket).blob(path).exists()
 
 
 class Cache:
@@ -37,7 +44,8 @@ class Cache:
     raise NotImplementedError()
 
   def clear(self):
-    raise NotImplementedError()
+    for doc in self.collection.get():
+      doc.reference.delete()
 
   def keys(self):
     raise NotImplementedError()
@@ -92,3 +100,6 @@ class Cache:
       except KeyError:
         doc.update(function())
         return True
+
+
+blocks = Cache('blocks')

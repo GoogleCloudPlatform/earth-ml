@@ -35,14 +35,14 @@ export class AppComponent {
 
   // Yearly animation
   readonly startYear = 2014
-  readonly endYear = 2018
+  readonly endYear = new Date().getFullYear()
   year = this.startYear
   overlays = new Map<number, Overlay>()  // {year: Overlay}
   yearChangeInterval = 1200  // milliseconds
   animationTimer: NodeJS.Timer | null = null
 
   // Landcover layer
-  landcoverOpacity = 0.8
+  landcoverOpacity = 1.0
 
   // @ts-ignore: uninitialized value, gets initialized at onMapReady.
   setLocation: (location: Location) => void
@@ -89,7 +89,7 @@ export class AppComponent {
 
     // Initialize the landsat and landcover overlays for every year.
     for (let year = this.startYear; year <= this.endYear; year++) {
-      let overlays = {
+      let overlay = {
         landsat: new google.maps.ImageMapType({
           getTileUrl: (tile, zoom) => {
             return this.server.landsatTileURL(tile.x, tile.y, zoom, year)
@@ -103,13 +103,15 @@ export class AppComponent {
           tileSize: new google.maps.Size(tileSize, tileSize),
         }),
       }
-      this.overlays.set(year, overlays)
-      $map.overlayMapTypes.push(overlays.landsat)
-      $map.overlayMapTypes.push(overlays.landcover)
+      this.overlays.set(year, overlay)
+      $map.overlayMapTypes.push(overlay.landsat)
     }
+    // for (let [_, overlay] of this.overlays) {
+    //   $map.overlayMapTypes.push(overlay.landcover)
+    // }
     this.updateOverlays()
 
-    // Set a function to run at specified intervals to update the year and the overlays.
+    // Start the timelapse animation.
     this.toggleAnimation(true)
   }
 
@@ -118,7 +120,6 @@ export class AppComponent {
       map.panTo({lat: location.lat, lng: location.lng})
       map.setZoom(location.zoom)
 
-      // this.selectedLocation = location
       for (let loc of this.locations)
         loc.closeInfoWindow()
       location.openInfoWindow(map)
@@ -127,9 +128,8 @@ export class AppComponent {
     this.updateOverlays = () => {
       // `this.year` is updated from the [(value)]="year" binding in <mat-slider>.
       for (let [year, overlay] of this.overlays) {
-        let visible = year == this.year ? 1 : 0
-        overlay.landsat.setOpacity(visible)
-        overlay.landcover.setOpacity(visible * this.landcoverOpacity)
+        overlay.landsat.setOpacity(year <= this.year ? 1 : 0)
+        overlay.landcover.setOpacity((year == this.year ? 1 : 0) * this.landcoverOpacity)
       }
     }
 
