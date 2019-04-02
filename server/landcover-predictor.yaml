@@ -1,0 +1,33 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: landcover-predictor-good
+spec:
+  template:
+    spec:
+      containers:
+      - name: landcover-predictor
+        image: gcr.io/project-earth-2018/predictor
+        imagePullPolicy: Always
+        env:
+          - name: "GOOGLE_APPLICATION_CREDENTIALS"
+            value: "/opt/project-earth-2018-sa.json"
+          - name: "TFRECORD"
+            value: "gs://project-earth-regions-test/3/5/2018/*.tfrecord.gz"
+          - name: "OUTPUTPATH"
+            value: "gs://earth-dummy/regions-4/3/5/2018/{:05}.tfrecord"
+        volumeMounts:
+          - name: gcp-credentials
+            readOnly: True
+            mountPath: /secret/gcp-credentials
+        resources:
+            limits:
+              nvidia.com/gpu: 0
+      restartPolicy: Never
+      volumes:
+          - name: gcp-credentials
+            secret:
+              secretName: user-gcp-sa
+
+  backoffLimit: 1

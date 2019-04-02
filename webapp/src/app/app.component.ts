@@ -5,8 +5,6 @@ import { Component, ViewChild } from '@angular/core';
 import { Location, makeDemoLocations } from './locations'
 import { ServerService } from './server.service';
 
-const tileSize = 256
-
 class Overlay {
   constructor(
     public landsat: google.maps.ImageMapType,
@@ -34,8 +32,8 @@ export class AppComponent {
   locations: Location[] = []
 
   // Yearly animation
-  readonly startYear = 2014
-  readonly endYear = new Date().getFullYear()
+  readonly startYear = 2018 //2013
+  readonly endYear = 2018 //new Date().getFullYear() - 1
   year = this.startYear
   overlays = new Map<number, Overlay>()  // {year: Overlay}
   yearChangeInterval = 1200  // milliseconds
@@ -94,21 +92,21 @@ export class AppComponent {
           getTileUrl: (tile, zoom) => {
             return this.server.landsatTileURL(tile.x, tile.y, zoom, year)
           },
-          tileSize: new google.maps.Size(tileSize, tileSize),
+          tileSize: new google.maps.Size(256, 256),
         }),
         landcover: new google.maps.ImageMapType({
           getTileUrl: (tile, zoom) => {
             return this.server.landcoverTileURL(tile.x, tile.y, zoom, year)
           },
-          tileSize: new google.maps.Size(tileSize, tileSize),
+          tileSize: new google.maps.Size(256, 256),
         }),
       }
       this.overlays.set(year, overlay)
       $map.overlayMapTypes.push(overlay.landsat)
     }
-    // for (let [_, overlay] of this.overlays) {
-    //   $map.overlayMapTypes.push(overlay.landcover)
-    // }
+    for (let [_, overlay] of this.overlays) {
+      $map.overlayMapTypes.push(overlay.landcover)
+    }
     this.updateOverlays()
 
     // Start the timelapse animation.

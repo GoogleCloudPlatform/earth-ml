@@ -48,7 +48,10 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
-env/
 
-# Credentials
+# Environment and credentials
+env*/
 credentials.*
+
+# Skip the server's app.yaml since it's generated on deploy.sh
+server/app.yaml

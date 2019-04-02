@@ -1,0 +1,7 @@
+Flask
+earthengine-api
+google-api-python-client
+mercantile
+oauth2client
+requests
+tensorflow

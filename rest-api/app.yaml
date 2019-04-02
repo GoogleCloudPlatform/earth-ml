@@ -1,6 +1,0 @@
-runtime: python37
-
-service: rest-api
-
-env_variables:
-  GOOGLE_APPLICATION_CREDENTIALS: "credentials.json"

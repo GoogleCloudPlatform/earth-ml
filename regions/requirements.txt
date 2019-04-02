@@ -1,3 +1,0 @@
-apache-beam[gcp]
-google-cloud-firestore
-requests
