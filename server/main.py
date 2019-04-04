@@ -1,9 +1,8 @@
-import ee
 import flask
 import json
-import os
 
-import tools
+import config
+import devops_tools
 import tile_landsat
 import tile_landcover
 import region_classify
@@ -12,29 +11,37 @@ import submit
 
 app = flask.Flask(__name__)
 
-# Initialize Earth Engine.
-credentials_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
-with open(credentials_file) as f:
-  credentials = json.load(f)
-  credentials_email = credentials['client_email']
-ee.Initialize(ee.ServiceAccountCredentials(credentials_email, credentials_file))
-
 
 @app.route('/')
 def index():
-  return flask.render_template('index.html', zoom_level=submit.REGION_ZOOM_LEVEL)
+  return flask.render_template(
+      'index.html',
+      project=config.PROJECT,
+      bucket=config.BUCKET,
+      asset_id=config.ASSET_ID,
+      zoom_level=config.region_zoom_level,
+  )
 
 
-#===--- tools ---===#
-@app.route('/list-ee-tasks')
-def app_list_ee_tasks():
-  result = dump(tools.list_ee_tasks(), pretty=True)
+#===--- DevOps tools ---===#
+@app.route('/check-progress', methods=['POST'])
+def app_check_progress():
+  args = flask.request.form
+  x = int(args['x'])
+  y = int(args['y'])
+  result = dump(devops_tools.check_progress(x, y), pretty=True)
   return f"""<pre>{result}</pre><a href="/">Go back</a>"""
 
 
-@app.route('/clear-image-collection')
+@app.route('/list-ee-tasks', methods=['POST'])
+def app_list_ee_tasks():
+  result = dump(devops_tools.list_ee_tasks(), pretty=True)
+  return f"""<pre>{result}</pre><a href="/">Go back</a>"""
+
+
+@app.route('/clear-image-collection', methods=['POST'])
 def app_clear_image_collection():
-  result = tools.clear_image_collections()
+  result = devops_tools.clear_image_collections()
   return f"""<pre>{result}</pre><a href="/">Go back</a>"""
 
 
@@ -75,12 +82,13 @@ def app_region_upload():
 #===--- submit ---===#
 @app.route('/submit/region', methods=['POST'])
 def app_extract_point():
-  args = flask.request.args
+  args = flask.request.form
   return dump(submit.region(
       x=int(args['x']),
       y=int(args['y']),
       start_year=int(args['start_year']),
       end_year=int(args['end_year']),
+      dry_run=as_bool(args.get('dry_run', 'n')),
   ))
 
 
@@ -92,12 +100,13 @@ def app_submit_point():
       lat=float(args['lat']),
       start_year=int(args['start_year']),
       end_year=int(args['end_year']),
+      dry_run=as_bool(args.get('dry_run', 'n')),
   ))
 
 
 @app.route('/submit/bounds', methods=['POST'])
 def app_submit_bounds():
-  args = flask.request.args
+  args = flask.request.form
   return dump(submit.bounds(
       west=float(args['west']),
       south=float(args['south']),
@@ -105,24 +114,26 @@ def app_submit_bounds():
       north=float(args['north']),
       start_year=int(args['start_year']),
       end_year=int(args['end_year']),
+      dry_run=as_bool(args.get('dry_run', 'n')),
   ))
 
 
 @app.route('/submit/tile', methods=['POST'])
 def app_submit_tile(x, y, zoom, year):
-  args = flask.request.args
+  args = flask.request.form
   return dump(submit.tile(
       x=int(args['x']),
       y=int(args['y']),
       zoom=int(args['zoom']),
       start_year=int(args['start_year']),
       end_year=int(args['end_year']),
+      dry_run=as_bool(args.get('dry_run', 'n')),
   ))
 
 
 #===--- helper functions ---===#
 def as_bool(string_value):
-  return string_value.lower() in ('y', 'yes', 't', 'true', '1'),
+  return string_value.lower() in ('y', 'yes', 't', 'true', '1')
 
 
 def dump(data, pretty=False):

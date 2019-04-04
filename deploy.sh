@@ -1,46 +1,27 @@
 #!/bin/bash
 
-: ${GOOGLE_APPLICATION_CREDENTIALS:?"Please set GOOGLE_APPLICATION_CREDENTIALS to your service account credentials json file"}
-: ${EE_PROJECT:?"Please set EE_PROJECT to users/your-ee-username or projects/your-ee-project"}
-: ${BUCKET:?"Please set GCS_BUCKET to your Cloud Storage bucket (without gs:// prefix)"}
+# Check the required environment variables.
+: ${BUCKET:?"Please set BUCKET to your Cloud Storage bucket (without gs:// prefix)"}
+: ${ML_ENGINE_TOPIC:?"Please set ML_ENGINE_TOPIC to a PubSub topic"}
+: ${ASSET_ID:?"Please set ASSET_ID to users/your-ee-username/landcover or projects/your-ee-project/landcover"}
+: ${GOOGLE_APPLICATION_CREDENTIALS:?"Please set GOOGLE_APPLICATION_CREDENTIALS to point to the path/to/your/credentials.json"}
 
 export PROJECT=$(gcloud config get-value project)
-export ML_ENGINE_TOPIC='ml-engine'
-export REGION_ZOOM_LEVEL=10
 
-# Generate the server's App Engine yaml file with the environment variables.
-cat > server/app.yaml <<EOF
-runtime: python37
-service: server
-env_variables:
-  GOOGLE_APPLICATION_CREDENTIALS: $GOOGLE_APPLICATION_CREDENTIALS
-  PROJECT: $PROJECT
-  BUCKET: $BUCKET
-  EE_PROJECT: $EE_PROJECT
-  REGION_ZOOM_LEVEL: $REGION_ZOOM_LEVEL
-EOF
+echo "PROJECT=$PROJECT"
+echo "BUCKET=$BUCKET"
+echo "ML_ENGINE_TOPIC=$ML_ENGINE_TOPIC"
+echo "ASSET_ID=$ASSET_ID"
+echo "GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS"
 
-# Deploying the web app and the server.
-( cd webapp ; ng build --prod )
-gcloud app deploy webapp server
+# Deploy the web application to App Engine.
+bash webapp/deploy.sh
 
-export SERVER="https://server-dot-$PROJECT.appspot.com"
+# Deploy the server to App Engine.
+bash server/deploy.sh
 
-# Deploying the Cloud Functions dispatcher.
-( cd dispatch ; gcloud functions deploy dispatch \
-  --runtime python37 \
-  --trigger-bucket $BUCKET \
-  --set-env-vars PROJECT=$PROJECT,SERVER=$SERVER,ML_ENGINE_TOPIC=$ML_ENGINE_TOPIC )
+# Deploy the dispatcher to Cloud Functions.
+bash dispatch/deploy.sh
 
-# Build and push the docker container.
-DEPLOYMENT=workers
-IMAGE=gcr.io/$PROJECT/$DEPLOYMENT:latest
-
-docker build -t $IMAGE worker/
-docker push $IMAGE
-
-# Create a new Deployment to run the service and autoscale it.
-kubectl delete deployment $DEPLOYMENT
-kubectl run $DEPLOYMENT --image $IMAGE
-kubectl autoscale deployment $DEPLOYMENT \
-  --min 1 --max 50 --cpu-percent 80
+# Deploy the workers to Kubernetes.
+bash worker/deploy.sh

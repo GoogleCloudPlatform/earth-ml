@@ -8,43 +8,50 @@
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
-    * {
-      font-family: Roboto
-    }
+    * {font-family: Roboto}
+    pre {font-family: "Roboto Mono"}
   </style>
 </head>
 
 <body>
   <h1>Project Earth Server</h1>
 
+  <h2>Environment</h2>
+  <pre>
+PROJECT={{project}}
+BUCKET={{bucket}}
+ASSET_ID={{asset_id}}
+REGION_ZOOM_LEVEL={{zoom_level}}
+
+The world is subdivided into 2^zoom_level x 2^zoom_level regions.
+{{2**zoom_level}} x {{2**zoom_level}} = {{2**(zoom_level*2)}} regions.
+  </pre>
+
   <h2>Submit</h2>
-  <form method='POST'>
-    start_year <input type="number" name="start_year" value="2018" />
-    end_year   <input type="number" name="end_year"   value="2018" />
+  <form method="POST">
+    start_year <input type="number" name="start_year" step="any" value="2013" />
+    end_year   <input type="number" name="end_year"   step="any" value="2018" />
+    <br />
+    dry_run <input type="checkbox" name="dry_run" value="y" />
 
     <h4>Region</h4>
-    zoom_level={{zoom_level}}
-    <br />
-    The world is subdivided into 2^zoom_level x 2^zoom_level regions.
-    <br />
-    {{2**zoom_level}} x {{2**zoom_level}} = {{2**(zoom_level*2)}} regions.
-    <br />
-    x <input type="number" name="x" placeholder="0 - {{2**zoom_level-1}}" />
-    y <input type="number" name="y" placeholder="0 - {{2**zoom_level-1}}"/>
+    x <input type="number" name="x" step="1" placeholder="0 - {{2**zoom_level-1}}" />
+    y <input type="number" name="y" step="1" placeholder="0 - {{2**zoom_level-1}}"/>
     <input type="submit" value="Submit region" formaction="/submit/region" />
 
     <h4>Point</h4>
-    lng <input type="number" name="lng" value="-122.34520102739617" />
-    lat <input type="number" name="lat" value="37.50799988162323" />
+    lng <input type="number" name="lng" step="any" value="-122.34520102739617" />
+    lat <input type="number" name="lat" step="any" value="37.50799988162323" />
     <input type="submit" value="Submit point" formaction="/submit/point" />
 
     <h4>Bounds</h4>
-    west  <input type="number" name="west"  value="-125.3321" />
-    south <input type="number" name="south" value="23.8991" />
-    east  <input type="number" name="east"  value="-65.7421" />
-    north <input type="number" name="north" value="49.4325" />
+    west  <input type="number" name="west"  step="any" value="-125.3321" />
+    south <input type="number" name="south" step="any" value="23.8991" />
+    east  <input type="number" name="east"  step="any" value="-65.7421" />
+    north <input type="number" name="north" step="any" value="49.4325" />
     <input type="submit" value="Submit bounds" formaction="/submit/bounds" />
     <br />
+
     For more region bounds, see <a href="https://openmaptiles.com/downloads/planet/">OpenMapTiles</a>
 
   </form>
@@ -53,12 +60,24 @@
   <ul>
 
     <li>
-      <a href="/list-ee-tasks">List EE tasks</a>
+      <form method="POST">
+        x <input type="number" name="x" placeholder="0 - {{2**zoom_level-1}}" />
+        y <input type="number" name="y" placeholder="0 - {{2**zoom_level-1}}"/>
+        <input type="submit" value="Check progress" formaction="/check-progress" />
+      </form>
     </li>
 
     <li>
-      <a href="/clear-image-collection">Clear EE image collection</a>
-      (this will take a while, check the logs)
+      <form method="POST">
+        <input type="submit" value="List EE tasks" formaction="/list-ee-tasks" />
+      </form>
+    </li>
+
+    <li>
+      <form method="POST">
+        <input type="submit" value="Clear EE ImageCollection" formaction="/clear-image-collection" />
+        (this will take a while, check the logs)
+      </form>
     </li>
 
   </ul>

@@ -2,53 +2,52 @@ import ee
 import mercantile
 import os
 
+import config
 import landsat_image
 
-BUCKET = os.environ['BUCKET']
-REGION_ZOOM_LEVEL = int(os.environ['REGION_ZOOM_LEVEL'])
 
-
-def region(x, y, start_year, end_year):
+def region(x, y, start_year, end_year, dry_run=False):
   return [
-      request_ee_task(x, y, year)
+      request_ee_task(x, y, year, dry_run)
       for year in range(start_year, end_year+1)
   ]
 
 
-def point(lng, lat, start_year, end_year):
-  tile = mercantile.tile(lng, lat, REGION_ZOOM_LEVEL)
-  return region(tile.x, tile.y, start_year, end_year)
+def point(lng, lat, start_year, end_year, dry_run=False):
+  tile = mercantile.tile(lng, lat, config.region_zoom_level)
+  return region(tile.x, tile.y, start_year, end_year, dry_run)
 
 
-def bounds(west, south, east, north, start_year, end_year):
+def bounds(west, south, east, north, start_year, end_year, dry_run=False):
   return [
-      region(tile.x, tile.y, start_year, end_year)
-      for tile in mercantile.tiles(west, south, east, north, REGION_ZOOM_LEVEL)
+      region(tile.x, tile.y, start_year, end_year, dry_run)
+      for tile in mercantile.tiles(west, south, east, north, config.region_zoom_level)
   ]
 
 
-def tile(x, y, zoom, start_year, end_year):
+def tile(x, y, zoom, start_year, end_year, dry_run=False):
   xy_bounds = mercantile.xy_bounds(x, y, zoom)
   west, north = mercantile.lnglat(xy_bounds.left, xy_bounds.top)
   east, south = mercantile.lnglat(xy_bounds.right, xy_bounds.bottom)
-  return bounds(west, south, east, north, start_year, end_year)
+  return bounds(west, south, east, north, start_year, end_year, dry_run)
 
 
-def request_ee_task(x, y, year):
+def request_ee_task(x, y, year, dry_run=False):
   # Get the region bounds to build a polygon.
-  bounds = mercantile.bounds(x, y, REGION_ZOOM_LEVEL)
+  bounds = mercantile.bounds(x, y, config.region_zoom_level)
   north = bounds.north
   east = bounds.east + 0.1
   south = bounds.south - 0.1
   west = bounds.west
 
   # Start the task asynchronously to export to Google Cloud Storage.
-  path_prefix = f"regions/{x}/{y}/{year}/"
+  output_path_prefix = f"regions/{x}/{y}/{year}/"
+  output_path = f"gs://{config.BUCKET}/{output_path_prefix}"
   task = ee.batch.Export.image.toCloudStorage(
       image=landsat_image.get(year),
       description=f"{x}-{y}-{year}",
-      bucket=BUCKET,
-      fileNamePrefix=path_prefix,
+      bucket=config.BUCKET,
+      fileNamePrefix=output_path_prefix,
       region=[
           [east, north],
           [west, north],
@@ -67,13 +66,15 @@ def request_ee_task(x, y, year):
       },
       maxWorkers=2000,
   )
-  # task.start()
+  if dry_run:
+    print(f"This is a dry run, task {task.id} will NOT be submitted.")
+  else:
+    task.start()
   print(f"{x}-{y}-{year}: started task {task.id} [{west},{south},{east},{north})")
 
   return {
-      'ee_task_id': task.id,
-      'bucket': BUCKET,
-      'path_prefix': path_prefix,
+      'task_id': task.id,
+      'output_path': output_path,
       'north': north,
       'east': east,
       'south': south,

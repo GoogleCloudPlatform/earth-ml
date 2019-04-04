@@ -32,8 +32,8 @@ export class AppComponent {
   locations: Location[] = []
 
   // Yearly animation
-  readonly startYear = 2018 //2013
-  readonly endYear = 2018 //new Date().getFullYear() - 1
+  readonly startYear = 2013
+  readonly endYear = new Date().getFullYear() - 1
   year = this.startYear
   overlays = new Map<number, Overlay>()  // {year: Overlay}
   yearChangeInterval = 1200  // milliseconds

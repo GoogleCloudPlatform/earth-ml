@@ -1,11 +1,13 @@
+import json
 import os
 import requests
 from google.cloud import pubsub
 from google.cloud import storage
 
 PROJECT = os.environ['PROJECT']
-SERVER = os.environ['SERVER']
 ML_ENGINE_TOPIC = os.environ['ML_ENGINE_TOPIC']
+
+server = f"https://server-dot-{PROJECT}.appspot.com"
 
 # Configure the Google Cloud client libraries.
 storage_client = storage.Client()
@@ -34,7 +36,6 @@ def run(bucket, file_path):
 
   abs_path = f"gs://{bucket}/{file_path}"
   dirname, x, y, year, filename = file_path.split('/', 4)
-  print(f"dirname={dirname}, x={x}, y={y}, year={year}, filename={filename}")
   if dirname == 'regions':
     handle_regions_file(abs_path, bucket, x, y, year, filename)
   elif dirname == 'ml-engine':
@@ -42,7 +43,7 @@ def run(bucket, file_path):
   elif dirname == 'landcover':
     handle_landcover_file(abs_path, bucket, x, y, year, filename)
   else:
-    print(f"No matching handler, ignoring: gs://{bucket}/{file_path}")
+    print(f"No matching handler, ignoring: {abs_path}")
 
 
 def handle_regions_file(abs_path, bucket, x, y, year, filename):
@@ -57,10 +58,28 @@ def handle_regions_file(abs_path, bucket, x, y, year, filename):
 
 def handle_ml_engine_file(abs_path, bucket, x, y, year, filename):
   if 'prediction.results' in filename:
+    import tensorflow as tf
+    tf.enable_eager_execution()
+
     # These are the output files from ML Engine batch prediction.
     # We publish them to ml_engine_topic to have the workers convert it to TFRecord.
-    print(f"Published {abs_path} to {ml_engine_topic}")
-    publisher.publish(ml_engine_topic, abs_path.encode('utf-8'))
+    # print(f"Published {abs_path} to {ml_engine_topic}")
+    # publisher.publish(ml_engine_topic, abs_path.encode('utf-8'))
+    example_header = b'\n\x9b\x80\x04\n\x97\x80\x04\n\tlandcover\x12\x88\x80\x04\x1a\x84\x80\x04\n\x80\x80\x04'
+    part, _ = filename.split('/', 1)
+    ml_engine_file = abs_path
+    landcover_file = f"gs://{bucket}/landcover/{x}/{y}/{year}/{part}.tfrecord"
+    with tf.io.TFRecordWriter(landcover_file) as output_file:
+      with tf.gfile.Open(ml_engine_file) as input_file:
+        for line in input_file:
+          # Make a serialized tf.train.Example for all the patches.
+          # We are using a pre-computed Example header to make it faster
+          # since all the patches are the same shape.
+          data = json.loads(line)
+          patch = tf.convert_to_tensor(data['predictions'], tf.int8)
+          array_as_bytes = tf.reshape(patch, [-1]).numpy().tobytes()
+          serialized_example = example_header + array_as_bytes
+          output_file.write(serialized_example)
   else:
     print(f"No action for file, ignoring: {abs_path}")
 
@@ -81,7 +100,7 @@ def handle_landcover_file(abs_path, bucket, x, y, year, filename):
         mixer_file_found = True
 
     if not mixer_file_found:
-      print(f"Mixer file not found, extraction is not done")
+      print(f"Mixer file not found, extraction is not done: {abs_path}")
       return
 
     print(f"Found {total_parts} region parts")
@@ -90,15 +109,15 @@ def handle_landcover_file(abs_path, bucket, x, y, year, filename):
       if not gcs_bucket.blob(landcover_prefix).exists():
         print(f"Not all parts are done: gs://{bucket}/{landcover_prefix}")
         return
-    print(f"All parts finished, requesting upload to Earth Engine")
-    request('region/upload', x=x, y=y, year=year, total_parts=total_parts)
+    print(f"All parts finished, requesting upload to Earth Engine: {abs_path}")
+    request('region/upload', x=x, y=y, year=year, parts=total_parts)
   else:
     print(f"No action for file, ignoring: {abs_path}")
 
 
 def request(action, **kwargs):
   # Does an asynchronous POST request, we don't need to wait for results.
-  url = f"{SERVER}/{action}"
+  url = f"{server}/{action}"
   print(f"POST {url} params={kwargs}")
   requests.post(url, params=kwargs)
 
@@ -107,8 +126,7 @@ if __name__ == '__main__':
   import argparse
 
   parser = argparse.ArgumentParser()
-  parser.add_argument(
-      'gcs_path', help='Google Cloud Storage path, including gs://')
+  parser.add_argument('gcs_path', help='Google Cloud Storage path')
   args = parser.parse_args()
 
   bucket, filename = args.gcs_path.lstrip('gs://').split('/', 1)

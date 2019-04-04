@@ -3,8 +3,7 @@ import time
 from googleapiclient import discovery
 from googleapiclient import errors
 
-PROJECT = os.environ['PROJECT']
-BUCKET = os.environ['BUCKET']
+import config
 
 model = 'landcover'
 version = None
@@ -14,10 +13,11 @@ gce_region = 'us-central1'
 
 
 def run(x, y, year, part):
-  input_path = f"gs://{BUCKET}/regions/{x}/{y}/{year}/{part:05}.tfrecord.gz"
+  input_path = f"gs://{config.BUCKET}/regions/{x}/{y}/{year}/{part:05}.tfrecord.gz"
   print(f"input_path: {input_path}")
 
-  output_path = f"gs://{BUCKET}/ml-engine/{x}/{y}/{year}/{part:05}/"
+  output_path_prefix = f"ml-engine/{x}/{y}/{year}/{part:05}/"
+  output_path = f"{output_path_prefix}/ml-engine/{x}/{y}/{year}/{part:05}/"
   print(f"output_path: {output_path}")
 
   # Create a unique job name using the current timestamp.
@@ -38,7 +38,7 @@ def run(x, y, year, part):
   }
 
   # Use the version if present, the model (its default version) if not.
-  project_path = f"projects/{PROJECT}"
+  project_path = f"projects/{config.PROJECT}"
   print(f"project_path: {project_path}")
 
   model_path = f"{project_path}/models/{model}"
@@ -58,14 +58,25 @@ def run(x, y, year, part):
       body=job_body,
   )
 
-  try:
-    request.execute()
-    print(f"Job requested, job_id: {job_id}")
+  retry = True
+  while retry:
+    try:
+      request.execute()
+      print(f"Job requested, job_id: {job_id}")
+      retry = False
 
-  except errors.HttpError as err:
-    # Something went wrong, print out some information.
-    print('There was an error getting the prediction results. '
-          'Check the details:')
-    print(err._get_reason())
+    except errors.HttpError as error:
+      # Something went wrong, print out some information.
+      error_message = error._get_reason()
+      print(error_message)
+      quota_error = (
+          'The allowed Cloud ML quota for API calls in the '
+          '"Job submission requests" group is exceeded'
+      )
+      if quota_error in error_message:
+        # There is a quota for 60 requests every 60 seconds,
+        # so try again in 61 seconds.
+        time.sleep(61)
+        retry = True
 
   return job_id
