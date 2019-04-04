@@ -8,7 +8,7 @@ The code in `single_predict.py` uses the following environment variables:
 * `OUTOUT`: GCS path to the output TFRecord file
 * `MODELDIR`: GCS path to where the trained model is stored
 
-Note: For simplicity, the `Dockerfile` in this directory expects the service account file to be available in this folder, and it will package it up within the `Dockerfile`. In practice this approach is not recommended and we encourage you to follow the right practices to attach a service account file to a docker container.
+**Note:** For simplicity, the `Dockerfile` in this directory expects the service account file to be available in this folder, and it will package it up within the docker image. In practice this approach is not recommended and we encourage you to follow the right practices to attach a service account file to your docker container.
 
 ### Build the Docker Image
 
