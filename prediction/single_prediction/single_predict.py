@@ -52,7 +52,7 @@ def blindspotv2_encoder(inputs, channel_in_n, channel_out_n, config):
                                  stride=2)
 
 
-def blindspotv2_decoder(inputs, residual, residual_pre_n, channel_out_n, config):
+def blindspotv2_decoder(inputs, residual, residual_pre_n, channel_out_n, conf):
     newSize = [tf.shape(residual)[1], tf.shape(residual)[2]]
     block_scaled = tf.image.resize_images(inputs, newSize)
     block_scaled = slim.conv2d(
@@ -224,7 +224,7 @@ def predict_fn(file_names):
         test_features = tf.reshape(test_features, [2])
         fixed_features = test_features
 
-        return (spatial_features, fixed_features)
+        return spatial_features, fixed_features
 
     ds = ds.map(parse, num_parallel_calls=5)
     ds = ds.batch(1)
@@ -250,7 +250,8 @@ def make_example(pred_dict):
 def predict(input_files, model_dir, output_file):
     now = datetime.datetime.now()
     print('Starting at: {}'.format(now.strftime("%Y-%m-%d %H:%M")))
-    model = tf.estimator.Estimator(model_fn=create_model_fn(config), model_dir=model_dir)
+    model = tf.estimator.Estimator(model_fn=create_model_fn(config),
+                                   model_dir=model_dir)
 
     predictions = model.predict(
         input_fn=lambda: predict_fn(file_names=input_files))
@@ -302,9 +303,5 @@ if __name__ == '__main__':
     predict([in_file, ], model_dir, out_file)
 
     print('Time to finish predictions: {}'.format((time.time() - start_time)))
-    now = datetime.datetime.now()
-    print('Finishing at: {}'.format(now.strftime("%Y-%m-%d %H:%M")))
 
-    # model_dir = gs://project-earth-kubeflow-model/landcover/4/metagraph
-    # tfrecords = gs://project-earth-regions-test/3/5/2018/*.tfrecord.gz
-    # output_path = gs://earth-dummy/regions-4/3/5/2018/{:05}.tfrecord
+

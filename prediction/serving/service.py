@@ -38,7 +38,13 @@ def make_job(name, in_file, output_file, yaml_file):
                                           'volumes': [
                                               {'name': 'gcp-credentials',
                                                'secret': {
-                                                   'secretName': 'user-gcp-sa'}}]}}}}
+                                                   'secretName': 'user-gcp-sa'}
+                                               }
+                                          ]
+                    }
+                    }
+                    }
+           }
 
     with open(yaml_file, 'w') as f:
         yaml.dump(job, f)
