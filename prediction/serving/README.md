@@ -1,4 +1,4 @@
-# An Endpoint to Run Predictions
+# Serving the Model
 
 This directory contains the code to create a flask server  to create prediction jobs on a Kubernetes cluster.
 
@@ -11,7 +11,7 @@ The code in `service.py` uses the following endpoints:
 * `list`: a GET request with no parameters. It returns a list of all created jobs
 * `delete`: a GET request with no parameters. It deletes all the created jobs, whether they are completed or not.
 
-Note: For simplicity, the `Dockerfile` in this directory expects the service account file to be available in this folder, and it will package it up within the `Dockerfile`. In practice this approach is not recommended and we encourage you to follow the right practices to attach a service account file to a docker container.
+**Note:** For simplicity, the `Dockerfile` in this directory expects the service account file to be available in this folder, and it will package it up within the docker image. In practice this approach is not recommended and we encourage you to follow the right practices to attach a service account file to a docker container.
 
 ### Build the Docker Image
 
