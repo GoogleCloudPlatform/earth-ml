@@ -16,8 +16,7 @@ def run(x, y, year, part):
   input_path = f"gs://{config.BUCKET}/regions/{x}/{y}/{year}/{part:05}.tfrecord.gz"
   print(f"input_path: {input_path}")
 
-  output_path_prefix = f"ml-engine/{x}/{y}/{year}/{part:05}/"
-  output_path = f"{output_path_prefix}/ml-engine/{x}/{y}/{year}/{part:05}/"
+  output_path = f"gs://{config.BUCKET}/ml-engine/{x}/{y}/{year}/{part:05}/"
   print(f"output_path: {output_path}")
 
   # Create a unique job name using the current timestamp.

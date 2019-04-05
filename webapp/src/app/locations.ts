@@ -4,15 +4,15 @@ export class Location {
 
   constructor(
     public name: string,
-    public icon: string,
-    public lat: number,
-    public lng: number,
-    public zoom: number,
     public description: string,
+    public icon: string,
+    public lng: number,
+    public lat: number,
+    public zoom: number,
   ) {
     this.marker = new google.maps.Marker({
       title: this.name,
-      position: {lat: this.lat, lng: this.lng},
+      position: {lng: this.lng, lat: this.lat},
     })
     this.infoWindow = new google.maps.InfoWindow({
       content: `
@@ -47,43 +47,41 @@ export class Location {
 
 export function makeDemoLocations() {
   return [
+
     new Location(
-      'Block Intersection',
+      'Suzhou 苏州市',
+      'Jiangsu, China',
       'landscape',
-      37.99687932557807,
-      -122.35058129549986,
-      12,
-      ``,
+      120.3641085,
+      31.3286305,
+      10,
     ),
 
     new Location(
-      'Food Forest',
-      'nature_people',
-      37.916690059761484,
-      -122.5968212332451,
-      12,
-      `\
-Food Forest description.`,
+      'Rondônia',
+      'Brazil',
+      'landscape',
+      -65.5369773,
+      -10.8179813,
+      8,
     ),
 
     new Location(
-      'Golden Gate',
-      'domain',
-      37.816690059761484,
-      -122.4968212332451,
-      11,
-      `\
-Golden Gate Bridge description.`,
+      'Cape Cod',
+      'Massachusetts, USA',
+      'landscape',
+      -70.5882979,
+      41.7988246,
+      10,
     ),
 
     new Location(
-      'Urban Growth',
-      'location_city',
-      37.716690059761484,
-      -122.3968212332451,
-      11,
-      `\
-Las Vegas description.`,
+      'Dubai دبي',
+      'United Arab Emirates',
+      'landscape',
+      54.9475504,
+      25.0757073,
+      10,
     ),
 
   ]

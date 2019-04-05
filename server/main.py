@@ -57,15 +57,15 @@ def app_tile_landcover(x, y, zoom, year):
 
 
 #===--- region ---===#
-@app.route('/region/classify', methods=['POST'])
-def app_region_classify():
-  args = flask.request.args
-  return dump(region_classify.run(
-      x=int(args['x']),
-      y=int(args['y']),
-      year=int(args['year']),
-      part=int(args['part']),
-  ))
+# @app.route('/region/classify', methods=['POST'])
+# def app_region_classify():
+#   args = flask.request.args
+#   return dump(region_classify.run(
+#       x=int(args['x']),
+#       y=int(args['y']),
+#       year=int(args['year']),
+#       part=int(args['part']),
+#   ))
 
 
 @app.route('/region/upload', methods=['POST'])

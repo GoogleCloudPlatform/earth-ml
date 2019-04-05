@@ -9,5 +9,6 @@
 ( cd dispatch ; gcloud functions deploy dispatch \
   --runtime python37 \
   --memory 2048MB \
+  --timeout 540s \
   --trigger-bucket $BUCKET \
   --set-env-vars PROJECT=$PROJECT,ML_ENGINE_TOPIC=$ML_ENGINE_TOPIC )

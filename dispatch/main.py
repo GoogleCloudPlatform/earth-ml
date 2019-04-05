@@ -1,13 +1,15 @@
 import json
 import os
 import requests
+from datetime import datetime
 from google.cloud import pubsub
 from google.cloud import storage
 
 PROJECT = os.environ['PROJECT']
 ML_ENGINE_TOPIC = os.environ['ML_ENGINE_TOPIC']
 
-server = f"https://server-dot-{PROJECT}.appspot.com"
+server_url = f"https://server-dot-{PROJECT}.appspot.com"
+classifier_url = "http://35.222.125.215:7070"
 
 # Configure the Google Cloud client libraries.
 storage_client = storage.Client()
@@ -38,8 +40,8 @@ def run(bucket, file_path):
   dirname, x, y, year, filename = file_path.split('/', 4)
   if dirname == 'regions':
     handle_regions_file(abs_path, bucket, x, y, year, filename)
-  elif dirname == 'ml-engine':
-    handle_ml_engine_file(abs_path, bucket, x, y, year, filename)
+  # elif dirname == 'ml-engine':
+  #   handle_ml_engine_file(abs_path, bucket, x, y, year, filename)
   elif dirname == 'landcover':
     handle_landcover_file(abs_path, bucket, x, y, year, filename)
   else:
@@ -49,39 +51,54 @@ def run(bucket, file_path):
 def handle_regions_file(abs_path, bucket, x, y, year, filename):
   if filename.endswith('.tfrecord.gz'):
     # As data is extracted, .tfrecord.gz files start appearing.
-    # The last file to appear is the mixer.json file, but we can ignore it for now.
-    part = int(filename.rstrip('.tfrecord.gz'))
-    request('region/classify', x=x, y=y, year=year, part=part)
+    part = filename.split('.', 1)[0]
+    timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+    job_id = f"landcover-{x}-{y}-{year}-{part}-{timestamp}"
+    input_path = f"gs://{bucket}/regions/{x}/{y}/{year}/{filename}"
+    output_path_prefix = f"landcover/{x}/{y}/{year}/{part}.tfrecord"
+    output_path = f"gs://{bucket}/{output_path_prefix}"
+    gcs_bucket = storage_client.bucket(bucket)
+    if gcs_bucket.blob(output_path_prefix).exists():
+      print(f"Skipping classification, landcover file exists: {output_path}")
+      return
+    requests.post(f"{classifier_url}/process", json={
+        'name': job_id,
+        'input': input_path,
+        'output': output_path,
+    })
+    print(f"Classification job requested: {abs_path}")
+    print(f"  job_id: {job_id}")
+    print(f"  input_path: {input_path}")
+    print(f"  output_path: {output_path}")
   else:
     print(f"No action for file, ignoring: {abs_path}")
 
 
-def handle_ml_engine_file(abs_path, bucket, x, y, year, filename):
-  if 'prediction.results' in filename:
-    import tensorflow as tf
-    tf.enable_eager_execution()
+# def handle_ml_engine_file(abs_path, bucket, x, y, year, filename):
+#   if 'prediction.results' in filename:
+#     import tensorflow as tf
+#     tf.enable_eager_execution()
 
-    # These are the output files from ML Engine batch prediction.
-    # We publish them to ml_engine_topic to have the workers convert it to TFRecord.
-    # print(f"Published {abs_path} to {ml_engine_topic}")
-    # publisher.publish(ml_engine_topic, abs_path.encode('utf-8'))
-    example_header = b'\n\x9b\x80\x04\n\x97\x80\x04\n\tlandcover\x12\x88\x80\x04\x1a\x84\x80\x04\n\x80\x80\x04'
-    part, _ = filename.split('/', 1)
-    ml_engine_file = abs_path
-    landcover_file = f"gs://{bucket}/landcover/{x}/{y}/{year}/{part}.tfrecord"
-    with tf.io.TFRecordWriter(landcover_file) as output_file:
-      with tf.gfile.Open(ml_engine_file) as input_file:
-        for line in input_file:
-          # Make a serialized tf.train.Example for all the patches.
-          # We are using a pre-computed Example header to make it faster
-          # since all the patches are the same shape.
-          data = json.loads(line)
-          patch = tf.convert_to_tensor(data['predictions'], tf.int8)
-          array_as_bytes = tf.reshape(patch, [-1]).numpy().tobytes()
-          serialized_example = example_header + array_as_bytes
-          output_file.write(serialized_example)
-  else:
-    print(f"No action for file, ignoring: {abs_path}")
+#     # We are using a pre-computed Example header to make it faster
+#     # since all the patches are the same shape.
+#     example_header = b'\n\x9b\x80\x04\n\x97\x80\x04\n\tlandcover\x12\x88\x80\x04\x1a\x84\x80\x04\n\x80\x80\x04'
+
+#     # These are the output files from ML Engine batch prediction.
+#     # We publish them to ml_engine_topic to have the workers convert it to TFRecord.
+#     part, _ = filename.split('/', 1)
+#     ml_engine_file = abs_path
+#     landcover_file = f"gs://{bucket}/landcover/{x}/{y}/{year}/{part}.tfrecord"
+#     with tf.io.TFRecordWriter(landcover_file) as output_file:
+#       with tf.gfile.Open(ml_engine_file) as input_file:
+#         for line in input_file:
+#           # Make a serialized tf.train.Example for all the patches.
+#           data = json.loads(line)
+#           patch = tf.convert_to_tensor(data['predictions'], tf.int8)
+#           array_as_bytes = tf.reshape(patch, [-1]).numpy().tobytes()
+#           serialized_example = example_header + array_as_bytes
+#           output_file.write(serialized_example)
+#   else:
+#     print(f"No action for file, ignoring: {abs_path}")
 
 
 def handle_landcover_file(abs_path, bucket, x, y, year, filename):
@@ -103,21 +120,22 @@ def handle_landcover_file(abs_path, bucket, x, y, year, filename):
       print(f"Mixer file not found, extraction is not done: {abs_path}")
       return
 
-    print(f"Found {total_parts} region parts")
+    parts_found = 0
     for part in range(total_parts):
       landcover_prefix = f"landcover/{x}/{y}/{year}/{part:05}.tfrecord"
-      if not gcs_bucket.blob(landcover_prefix).exists():
-        print(f"Not all parts are done: gs://{bucket}/{landcover_prefix}")
-        return
-    print(f"All parts finished, requesting upload to Earth Engine: {abs_path}")
-    request('region/upload', x=x, y=y, year=year, parts=total_parts)
+      if gcs_bucket.blob(landcover_prefix).exists():
+        parts_found += 1
+    print(f"{parts_found} of {total_parts} parts finished: {abs_path}")
+    if parts_found == total_parts:
+      print(f"All parts finished, requesting upload to Earth Engine: {abs_path}")
+      request('region/upload', x=x, y=y, year=year, parts=total_parts)
   else:
     print(f"No action for file, ignoring: {abs_path}")
 
 
 def request(action, **kwargs):
   # Does an asynchronous POST request, we don't need to wait for results.
-  url = f"{server}/{action}"
+  url = f"{server_url}/{action}"
   print(f"POST {url} params={kwargs}")
   requests.post(url, params=kwargs)
 
@@ -129,5 +147,7 @@ if __name__ == '__main__':
   parser.add_argument('gcs_path', help='Google Cloud Storage path')
   args = parser.parse_args()
 
-  bucket, filename = args.gcs_path.lstrip('gs://').split('/', 1)
-  run(bucket, filename)
+  bucket, path_prefix = args.gcs_path.lstrip('gs://').split('/', 1)
+  gcs_bucket = storage_client.bucket(bucket)
+  for blob in gcs_bucket.list_blobs(prefix=path_prefix):
+    run(bucket, blob.name)

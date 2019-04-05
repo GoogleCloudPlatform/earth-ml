@@ -25,20 +25,13 @@
     <!-- Sidenav -->
     <mat-sidenav #sidenav mode="side" opened>
 
-      <!-- Search Box -->
-      <mat-form-field id="search-box" appearance="outline">
-        <mat-label>Search Location</mat-label>
-        <input #searchBox matInput
-            autocorrect="off" autocapitalize="off" spellcheck="off">
-        <mat-hint>Explore a place or location</mat-hint>
-      </mat-form-field>
-
       <!-- Locations List -->
       <mat-action-list>
         <button mat-list-item *ngFor="let location of locations"
             (click)="setLocation(location)">
           <mat-icon matListIcon> {{location.icon}} </mat-icon>
-          <h1 mat-line> {{location.name}} </h1>
+          <h2 mat-line> {{location.name}} </h2>
+          <p mat-line> {{location.description}} </p>
         </button>
       </mat-action-list>
 
@@ -54,13 +47,13 @@
         <mat-card>
 
           <mat-card-title>
-            <mat-icon>layers</mat-icon> Landcover change
+            <mat-icon>layers</mat-icon> What is on Earth?
           </mat-card-title>
 
           <mat-card-content>
-            <mat-slider id="opacity-slider"
-                [(value)]="landcoverOpacity" min="0" max="1" step="0.01">
-            </mat-slider>
+            <mat-slide-toggle (change)="landcoverOn = $event.checked; updateOverlays()" checked>
+              Landcover
+            </mat-slide-toggle>
           </mat-card-content>
 
           <mat-card-content>

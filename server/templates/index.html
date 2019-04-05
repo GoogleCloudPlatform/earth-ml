@@ -40,9 +40,26 @@ The world is subdivided into 2^zoom_level x 2^zoom_level regions.
     <input type="submit" value="Submit region" formaction="/submit/region" />
 
     <h4>Point</h4>
-    lng <input type="number" name="lng" step="any" value="-122.34520102739617" />
-    lat <input type="number" name="lat" step="any" value="37.50799988162323" />
+    lng <input id="lng" type="number" name="lng" step="any" value="-122.34520102739617" />
+    lat <input id="lat" type="number" name="lat" step="any" value="37.50799988162323" />
     <input type="submit" value="Submit point" formaction="/submit/point" />
+    <br />
+    <button type="button" onclick="
+        document.getElementById('lng').value = '120.3641085'
+        document.getElementById('lat').value = '31.3286305'
+        ">Suzhou</button>
+    <button type="button" onclick="
+        document.getElementById('lng').value = '-65.5369773'
+        document.getElementById('lat').value = '-10.8179813'
+        ">Rondônia</button>
+    <button type="button" onclick="
+        document.getElementById('lng').value = '-70.5882979'
+        document.getElementById('lat').value = '41.7988246'
+        ">Cape Cod</button>
+    <button type="button" onclick="
+        document.getElementById('lng').value = '54.9475504'
+        document.getElementById('lat').value = '25.0757073'
+        ">Dubai</button>
 
     <h4>Bounds</h4>
     west  <input type="number" name="west"  step="any" value="-125.3321" />

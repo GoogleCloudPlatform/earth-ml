@@ -33,14 +33,14 @@ export class AppComponent {
 
   // Yearly animation
   readonly startYear = 2013
-  readonly endYear = new Date().getFullYear() - 1
+  readonly endYear = 2018
   year = this.startYear
   overlays = new Map<number, Overlay>()  // {year: Overlay}
   yearChangeInterval = 1200  // milliseconds
   animationTimer: NodeJS.Timer | null = null
 
   // Landcover layer
-  landcoverOpacity = 1.0
+  landcoverOn = 1.0
 
   // @ts-ignore: uninitialized value, gets initialized at onMapReady.
   setLocation: (location: Location) => void
@@ -51,9 +51,7 @@ export class AppComponent {
   // @ts-ignore: uninitialized value, gets initialized at onMapReady.
   toggleAnimation: (start: boolean) => void
 
-  constructor(
-    private readonly server: ServerService,
-  ) { }
+  constructor(private readonly server: ServerService) { }
 
   onMapReady($map: google.maps.Map) {
     // Initialize functions with closures to include a reference to $map.
@@ -61,29 +59,13 @@ export class AppComponent {
 
     // Set the map markers for all the locations.
     this.locations = makeDemoLocations()
-    for (let location of this.locations) {
-      location.marker.setMap($map)
-      location.marker.addListener('click', () => {
-        this.setLocation(location)
-      })
-    }
+    // for (let location of this.locations) {
+    //   location.marker.setMap($map)
+    //   location.marker.addListener('click', () => {
+    //     this.setLocation(location)
+    //   })
+    // }
     this.setLocation(this.locations[0])
-
-    // Set up the search box.
-    let searchBox = new google.maps.places.Autocomplete(this.searchBox.nativeElement)
-    searchBox.addListener('place_changed', () => {
-      let place = searchBox.getPlace()
-      if (!place.geometry)
-        return
-
-      if (place.geometry.viewport) {
-        $map.fitBounds(place.geometry.viewport)
-      } else {
-        $map.setCenter(place.geometry.location)
-        $map.setZoom(12)
-      }
-    })
-    searchBox.bindTo('bounds', $map)
 
     // Initialize the landsat and landcover overlays for every year.
     for (let year = this.startYear; year <= this.endYear; year++) {
@@ -102,10 +84,14 @@ export class AppComponent {
         }),
       }
       this.overlays.set(year, overlay)
-      $map.overlayMapTypes.push(overlay.landsat)
     }
+    // Set the landcover overlays.
     for (let [_, overlay] of this.overlays) {
       $map.overlayMapTypes.push(overlay.landcover)
+    }
+    // Set the landsat overlays.
+    for (let [_, overlay] of this.overlays) {
+      $map.overlayMapTypes.push(overlay.landsat)
     }
     this.updateOverlays()
 
@@ -118,16 +104,21 @@ export class AppComponent {
       map.panTo({lat: location.lat, lng: location.lng})
       map.setZoom(location.zoom)
 
-      for (let loc of this.locations)
-        loc.closeInfoWindow()
-      location.openInfoWindow(map)
+      // for (let loc of this.locations)
+      //   loc.closeInfoWindow()
+      // location.openInfoWindow(map)
     }
 
     this.updateOverlays = () => {
       // `this.year` is updated from the [(value)]="year" binding in <mat-slider>.
       for (let [year, overlay] of this.overlays) {
-        overlay.landsat.setOpacity(year <= this.year ? 1 : 0)
-        overlay.landcover.setOpacity((year == this.year ? 1 : 0) * this.landcoverOpacity)
+        if (this.landcoverOn) {
+          overlay.landsat.setOpacity(0)
+          overlay.landcover.setOpacity(year <= this.year ? 1 : 0)
+        } else {
+          overlay.landsat.setOpacity(year <= this.year ? 1 : 0)
+          overlay.landcover.setOpacity(0)
+        }
       }
     }
 
