@@ -1,3 +1,4 @@
+import ee
 import json
 import os
 import subprocess as sp
@@ -20,6 +21,11 @@ def run(x, y, year, parts):
 
   asset_id = f"{config.ASSET_ID}/{region_id}"
   print(f"asset_id: {asset_id}")
+
+  # If the asset already exists, skip it.
+  if ee.data.getInfo(asset_id) is not None:
+    print(f"Skipping upload, asset already exists: {asset_id}")
+    return asset_id
 
   command = config.earthengine + ['upload', 'image']
   command += landcover_files

@@ -68,9 +68,12 @@ def request_ee_task(x, y, year, dry_run=False):
   )
   if dry_run:
     print(f"This is a dry run, task {task.id} will NOT be submitted.")
+  elif config.bucket.blob(output_path_prefix + '00000.tfrecord.gz').exists():
+    # A file already exists, that means an extraction is already in process.
+    print(f"Skipping extraction, found: {output_path_prefix + '00000.tfrecord.gz'}")
   else:
     task.start()
-  print(f"{x}-{y}-{year}: started task {task.id} [{west},{south},{east},{north})")
+    print(f"{x}-{y}-{year}: started task {task.id} [{west},{south},{east},{north})")
 
   return {
       'task_id': task.id,
