@@ -91,7 +91,7 @@ export class AppComponent {
     }
     // Set the landsat overlays.
     for (let [_, overlay] of this.overlays) {
-      $map.overlayMapTypes.push(overlay.landsat)
+      // $map.overlayMapTypes.push(overlay.landsat)
     }
     this.updateOverlays()
 
@@ -101,8 +101,14 @@ export class AppComponent {
 
   initMapMethods(map: google.maps.Map) {
     this.setLocation = (location: Location) => {
-      map.panTo({lat: location.lat, lng: location.lng})
+      // Restrict the user movements to stay in bounds.
+      map.set('restriction', {
+        latLngBounds: location.bounds,
+        strictBounds: true,
+      })
+
       map.setZoom(location.zoom)
+      map.panTo(location.coords)
 
       // for (let loc of this.locations)
       //   loc.closeInfoWindow()
