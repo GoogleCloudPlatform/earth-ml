@@ -41,6 +41,14 @@ mat-slider {
   background-color: black;
 }
 
+#legend-div {
+  z-index: 1;
+  position: absolute;
+  bottom: 11ex;
+  right: 7ex;
+  background-color: black;
+}
+
 #map-div {
   bottom: 8ex;
 }

@@ -1,17 +1,3 @@
-<!-- Possible icons
-<mat-icon matListIcon> landscape </mat-icon>
-<mat-icon matListIcon> nature </mat-icon>
-<mat-icon matListIcon> nature_people </mat-icon>
-<mat-icon matListIcon> wb_cloudy </mat-icon>
-<mat-icon matListIcon> wb_sunny </mat-icon>
-<mat-icon matListIcon> ac_unit </mat-icon>
-<mat-icon matListIcon> domain </mat-icon>
-<mat-icon matListIcon> location_city </mat-icon>
-<mat-icon matListIcon> public </mat-icon>
-<mat-icon matListIcon> whatshot </mat-icon>
-<mat-icon matListIcon> star </mat-icon>
--->
-
 <mat-toolbar>
   <button mat-icon-button (click)="sidenav.toggle()">
     <mat-icon>menu</mat-icon>
@@ -29,7 +15,6 @@
       <mat-action-list>
         <button mat-list-item *ngFor="let location of locations"
             (click)="setLocation(location)">
-          <mat-icon matListIcon> {{location.icon}} </mat-icon>
           <h2 mat-line> {{location.name}} </h2>
           <p mat-line> {{location.description}} </p>
         </button>
@@ -46,13 +31,11 @@
       <div id="controls-div">
         <mat-card>
 
-          <mat-card-title>
-            <mat-icon>layers</mat-icon> What is on Earth?
-          </mat-card-title>
+          <mat-card-title> What is on Earth? </mat-card-title>
 
           <mat-card-content>
             <mat-slide-toggle (change)="landcoverOn = $event.checked; updateOverlays()" checked>
-              Landcover
+              Land cover
             </mat-slide-toggle>
           </mat-card-content>
 
@@ -62,6 +45,62 @@
             </mat-slide-toggle>
           </mat-card-content>
 
+          <mat-card-content>
+            <mat-slide-toggle #legendToggle>
+              Legend
+            </mat-slide-toggle>
+          </mat-card-content>
+
+        </mat-card>
+      </div>
+
+      <!-- Map legend -->
+      <div id="legend-div" [hidden]="!legendToggle.checked">
+        <mat-card style="padding: 1ex">
+          <mat-card-content>
+            <mat-list>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #90caf9">layers</mat-icon>
+                Water
+              </mat-list-item>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #26a69a">layers</mat-icon>
+                Wetland
+              </mat-list-item>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #689f38">layers</mat-icon>
+                Forest
+              </mat-list-item>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #aed581">layers</mat-icon>
+                Grassland
+              </mat-list-item>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #e6ee9c">layers</mat-icon>
+                Shrubland
+              </mat-list-item>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #ffecb3">layers</mat-icon>
+                Barren land
+              </mat-list-item>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #fbc02d">layers</mat-icon>
+                Farmland
+              </mat-list-item>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #ffab91">layers</mat-icon>
+                Tundra
+              </mat-list-item>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #fafafa">layers</mat-icon>
+                Snow / Ice
+              </mat-list-item>
+              <mat-list-item style="height: 3ex">
+                <mat-icon mat-list-icon style="color: #e0e0e0">layers</mat-icon>
+                Urban
+              </mat-list-item>
+            </mat-list>
+          </mat-card-content>
         </mat-card>
       </div>
 
@@ -69,7 +108,7 @@
       <div id="map-div" class="stretch">
         <agm-map
             [latitude]="state.lat" [longitude]="state.lng" [zoom]="state.zoom"
-            (mapReady)="onMapReady($event)" minZoom="2" maxZoom="13"
+            (mapReady)="onMapReady($event)" maxZoom="13"
             streetViewControl="" mapTypeControl="" mapTypeId="satellite"
             styles="[{}]  // Set Google logo to white">
         </agm-map>

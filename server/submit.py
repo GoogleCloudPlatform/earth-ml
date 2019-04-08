@@ -41,11 +41,12 @@ def request_ee_task(x, y, year, dry_run=False):
   west = bounds.west
 
   # Start the task asynchronously to export to Google Cloud Storage.
+  region_id = f"{x}-{y}-{year}"
   output_path_prefix = f"regions/{x}/{y}/{year}/"
   output_path = f"gs://{config.BUCKET}/{output_path_prefix}"
   task = ee.batch.Export.image.toCloudStorage(
       image=landsat_image.get(year),
-      description=f"{x}-{y}-{year}",
+      description=region_id,
       bucket=config.BUCKET,
       fileNamePrefix=output_path_prefix,
       region=[
@@ -66,14 +67,24 @@ def request_ee_task(x, y, year, dry_run=False):
       },
       maxWorkers=2000,
   )
+
   if dry_run:
     print(f"This is a dry run, task {task.id} will NOT be submitted.")
   elif config.bucket.blob(output_path_prefix + '00000.tfrecord.gz').exists():
     # A file already exists, that means an extraction is already in process.
     print(f"Skipping extraction, found: {output_path_prefix + '00000.tfrecord.gz'}")
   else:
-    task.start()
-    print(f"{x}-{y}-{year}: started task {task.id} [{west},{south},{east},{north})")
+    task_found = False
+    for t in ee.batch.Task.list():
+      if t.state in ('READY', 'RUNNING') and \
+          t.task_type == 'EXTRACT_IMAGE' and \
+          t.config['description'] == region_id:
+        print(f"Skipping extraction, found task: {t.id}")
+        task_found = True
+        break
+    if not task_found:
+      task.start()
+      print(f"{x}-{y}-{year}: started task {task.id} [{west},{south},{east},{north})")
 
   return {
       'task_id': task.id,

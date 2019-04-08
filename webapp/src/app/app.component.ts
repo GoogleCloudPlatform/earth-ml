@@ -1,8 +1,8 @@
 /// <reference types="@types/googlemaps" />
 
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 
-import { Location, makeDemoLocations } from './locations'
+import { DemoLocation, makeDemoLocations } from './locations'
 import { ServerService } from './server.service';
 
 class Overlay {
@@ -18,18 +18,15 @@ class Overlay {
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'Project Earth';
+  title = 'What is on Earth?';
   state = {
     lat: 37.8195428011924,
     lng: -122.49165319668896,
     zoom: 13,
   }
 
-  // @ts-ignore: initialized by Angular.
-  @ViewChild('searchBox') searchBox: ElementRef
-
   // Locations
-  locations: Location[] = []
+  locations: DemoLocation[] = []
 
   // Yearly animation
   readonly startYear = 2013
@@ -38,12 +35,12 @@ export class AppComponent {
   overlays = new Map<number, Overlay>()  // {year: Overlay}
   yearChangeInterval = 1200  // milliseconds
   animationTimer: NodeJS.Timer | null = null
-
-  // Landcover layer
   landcoverOn = 1.0
 
+  constructor(private readonly server: ServerService) { }
+
   // @ts-ignore: uninitialized value, gets initialized at onMapReady.
-  setLocation: (location: Location) => void
+  setLocation: (location: DemoLocation) => void
 
   // @ts-ignore: uninitialized value, gets initialized at onMapReady.
   updateOverlays: () => void
@@ -51,20 +48,12 @@ export class AppComponent {
   // @ts-ignore: uninitialized value, gets initialized at onMapReady.
   toggleAnimation: (start: boolean) => void
 
-  constructor(private readonly server: ServerService) { }
-
   onMapReady($map: google.maps.Map) {
     // Initialize functions with closures to include a reference to $map.
     this.initMapMethods($map)
 
     // Set the map markers for all the locations.
     this.locations = makeDemoLocations()
-    // for (let location of this.locations) {
-    //   location.marker.setMap($map)
-    //   location.marker.addListener('click', () => {
-    //     this.setLocation(location)
-    //   })
-    // }
     this.setLocation(this.locations[0])
 
     // Initialize the landsat and landcover overlays for every year.
@@ -85,14 +74,17 @@ export class AppComponent {
       }
       this.overlays.set(year, overlay)
     }
-    // Set the landcover overlays.
+
+    // Load the landcover overlays first.
     for (let [_, overlay] of this.overlays) {
       $map.overlayMapTypes.push(overlay.landcover)
     }
-    // Set the landsat overlays.
+
+    // Then load the landsat overlays.
     for (let [_, overlay] of this.overlays) {
-      // $map.overlayMapTypes.push(overlay.landsat)
+      $map.overlayMapTypes.push(overlay.landsat)
     }
+
     this.updateOverlays()
 
     // Start the timelapse animation.
@@ -100,7 +92,10 @@ export class AppComponent {
   }
 
   initMapMethods(map: google.maps.Map) {
-    this.setLocation = (location: Location) => {
+    this.setLocation = (location: DemoLocation) => {
+      map.setZoom(location.zoom)
+      map.panTo(location.coords)
+
       // Restrict the user movements to stay in bounds.
       map.set('restriction', {
         latLngBounds: location.bounds,
@@ -109,10 +104,6 @@ export class AppComponent {
 
       map.setZoom(location.zoom)
       map.panTo(location.coords)
-
-      // for (let loc of this.locations)
-      //   loc.closeInfoWindow()
-      // location.openInfoWindow(map)
     }
 
     this.updateOverlays = () => {

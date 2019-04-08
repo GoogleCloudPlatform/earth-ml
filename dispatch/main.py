@@ -150,4 +150,5 @@ if __name__ == '__main__':
   bucket, path_prefix = args.gcs_path.lstrip('gs://').split('/', 1)
   gcs_bucket = storage_client.bucket(bucket)
   for blob in gcs_bucket.list_blobs(prefix=path_prefix):
+    print(blob.name)
     run(bucket, blob.name)
