@@ -1,5 +1,6 @@
 import flask
 import json
+from flask_caching import Cache
 
 import config
 import devops_tools
@@ -10,6 +11,12 @@ import region_upload
 import submit
 
 app = flask.Flask(__name__)
+app.config.from_mapping({
+    "DEBUG": True,          # some Flask specific configs
+    "CACHE_TYPE": "simple", # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 300
+})
+cache = Cache(app)
 
 
 @app.route('/')
@@ -47,11 +54,13 @@ def app_clear_image_collection():
 
 #===--- tile --===#
 @app.route('/tile/landsat/<int:x>/<int:y>/<int:zoom>/<int:year>')
+@cache.cached()
 def app_tile_landsat(x, y, zoom, year):
   return flask.redirect(tile_landsat.run(x, y, zoom, year))
 
 
 @app.route('/tile/landcover/<int:x>/<int:y>/<int:zoom>/<int:year>')
+@cache.cached()
 def app_tile_landcover(x, y, zoom, year):
   return flask.redirect(tile_landcover.run(x, y, zoom, year))
 
