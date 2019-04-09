@@ -32,11 +32,6 @@ bash setup.sh
 
 ## Deploying the project
 
-Next, copy your service account credentials JSON file at the root directory of this project.
-```sh
-cp path/to/your/credentials.json credentials.json
-```
-
 Once all the resources are set, please run the [deploy.sh](deploy.sh) script to deploy all the required services.
 ```sh
 bash deploy.sh
