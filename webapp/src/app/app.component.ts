@@ -18,7 +18,7 @@ class Overlay {
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'What is on Earth?';
+  title = 'Pick a location';
   state = {
     lat: 37.8195428011924,
     lng: -122.49165319668896,

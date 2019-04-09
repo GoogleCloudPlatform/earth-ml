@@ -15,7 +15,7 @@
       <mat-action-list>
         <button mat-list-item *ngFor="let location of locations"
             (click)="setLocation(location)">
-          <h2 mat-line> {{location.name}} </h2>
+          <h1 mat-line> {{location.name}} </h1>
           <p mat-line> {{location.description}} </p>
         </button>
       </mat-action-list>
@@ -31,7 +31,7 @@
       <div id="controls-div">
         <mat-card>
 
-          <mat-card-title> What is on Earth? </mat-card-title>
+          <mat-card-title> Layers </mat-card-title>
 
           <mat-card-content>
             <mat-slide-toggle (change)="landcoverOn = $event.checked; updateOverlays()" checked>
@@ -45,17 +45,11 @@
             </mat-slide-toggle>
           </mat-card-content>
 
-          <mat-card-content>
-            <mat-slide-toggle #legendToggle>
-              Legend
-            </mat-slide-toggle>
-          </mat-card-content>
-
         </mat-card>
       </div>
 
       <!-- Map legend -->
-      <div id="legend-div" [hidden]="!legendToggle.checked">
+      <div id="legend-div">
         <mat-card style="padding: 1ex">
           <mat-card-content>
             <mat-list>

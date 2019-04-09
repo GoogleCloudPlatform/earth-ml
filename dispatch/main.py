@@ -2,19 +2,19 @@ import json
 import os
 import requests
 from datetime import datetime
-from google.cloud import pubsub
+# from google.cloud import pubsub
 from google.cloud import storage
 
 PROJECT = os.environ['PROJECT']
-ML_ENGINE_TOPIC = os.environ['ML_ENGINE_TOPIC']
+# ML_ENGINE_TOPIC = os.environ['ML_ENGINE_TOPIC']
 
 server_url = f"https://server-dot-{PROJECT}.appspot.com"
 classifier_url = "http://35.222.125.215:7070"
 
 # Configure the Google Cloud client libraries.
 storage_client = storage.Client()
-publisher = pubsub.PublisherClient()
-ml_engine_topic = publisher.topic_path(PROJECT, ML_ENGINE_TOPIC)
+# publisher = pubsub.PublisherClient()
+# ml_engine_topic = publisher.topic_path(PROJECT, ML_ENGINE_TOPIC)
 
 
 def dispatch(event, context):
