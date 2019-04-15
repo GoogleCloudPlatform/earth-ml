@@ -23,21 +23,6 @@ config = {'encoder_extra_convolutions': 1,
           'classes': LANDCOVER_CLASSES_N}
 
 
-def chunks(items, count):
-    li = len(items)
-    smallest_size = li // count
-    n_biggers = li % count
-    lengths = [smallest_size] * count
-    for i in range(n_biggers):
-        lengths[i] += 1
-    partitions = []
-    starting = 0
-    for l in lengths:
-        partitions.append(items[starting: starting + l])
-        starting += l
-    return partitions
-
-
 def blindspotv2_encoder(inputs, channel_in_n, channel_out_n, config):
     rdx = inputs
 
