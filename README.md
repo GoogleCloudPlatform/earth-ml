@@ -1,5 +1,8 @@
 # Project Earth
 
+> * Results in Image Collection [`projects/project-earth/landcover`](https://code.earthengine.google.com/?asset=projects/project-earth/landcover)
+> * Visualize in [Earth Engine](https://code.earthengine.google.com/55eeefb8448ebe418e531fabbfd9ddc7)
+
 ## Development environment
 
 Before you start, make sure you have the following installed:
