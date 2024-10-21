@@ -1,4 +1,5 @@
 import time
+import os
 import subprocess
 from flask import Flask
 from flask import request
@@ -6,7 +7,7 @@ import yaml
 import json
 
 app = Flask(__name__)
-MODEL_DIR = 'gs://project-earth-kubeflow-model/landcover/4/metagraph'
+MODEL_DIR = os.environ['MODEL_GCS_DIR']
 JOB_NAMES = []
 
 
